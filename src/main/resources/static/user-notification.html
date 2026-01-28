@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | Nova Bank</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Same as before to match theme */
+        :root {
+            --bg-primary: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sec: rgba(255, 255, 255, 0.7);
+            --accent-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        body.light-mode {
+            --bg-primary: linear-gradient(135deg, #f0f4ff, #f5f3ff, #fae8ff);
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(102, 126, 234, 0.2);
+            --text-main: #1e1b4b;
+            --text-sec: #64748b;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; transition:0.3s; }
+        body { background: var(--bg-primary); min-height: 100vh; padding: 40px; color: var(--text-main); }
+
+        .container { max-width: 800px; margin: 0 auto; }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+            background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); backdrop-filter: blur(10px);
+        }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .btn-back { background: none; border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+        .btn-back:hover { background: rgba(255,255,255,0.1); }
+
+        .notify-box { display: flex; flex-direction: column; gap: 15px; }
+
+        .notification {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 20px; display: flex; justify-content: space-between; align-items: flex-start;
+            box-shadow: var(--shadow); position: relative; overflow: hidden;
+        }
+        .notification p { font-size: 15px; line-height: 1.5; margin-right: 20px; }
+        .notification .date { font-size: 12px; color: var(--text-sec); white-space: nowrap; }
+        .notification.unread { border-left: 4px solid #f5576c; background: linear-gradient(to right, rgba(245, 87, 108, 0.05), transparent); }
+
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 30px; }
+        .pagination button { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .pagination button.active { background: #667eea; border-color: #667eea; color: white; }
+
+        .theme-btn { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 100; }
+    </style>
+</head>
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()">🌙</button>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-bell"></i> Notifications</h1>
+        <button class="btn-back" onclick="location.href='user-dashboard.html'">Back</button>
+    </div>
+
+    <div class="notify-box" id="notifyBox">
+        <div style="text-align:center; padding:40px; color:var(--text-sec)">Loading...</div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        const btn = document.querySelector('.theme-btn');
+        btn.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            document.querySelector('.theme-btn').textContent = '☀️';
+        }
+    });
+
+    const API_URL = "http://localhost:8081";
+    let notifications = [];
+    let currentPage = 1;
+    const rowsPerPage = 6;
+    let accNo = null;
+
+    // --- LOGIC FIX ---
+    function checkLogin(){
+        // Check for accountNumber which is what user-login.html saves
+        accNo = localStorage.getItem("accountNumber");
+        if(!accNo){
+            location.href = "user-login.html";
+        } else {
+            loadNotifications();
+        }
+    }
+
+    async function loadNotifications(){
+        try{
+            // Note: Since backend for notifications isn't ready, this fetch might fail.
+            // When ready, ensure endpoint matches /notifications/{accountNumber}
+            const res = await fetch(`${API_URL}/notifications/${accNo}`)
+            notifications = await res.json();
+            currentPage = 1;
+            renderNotifications();
+
+            await fetch(`${API_URL}/notifications/read-all/${accNo}`, {
+            method: "POST"
+        });
+        }catch{
+            notifyBox.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec)">No new notifications</div>`;
+             `<div style="text-align:center; padding:30px; color:var(--text-sec)">
+             No new notifications
+           </div>`;
+        }
+    }
+
+    function renderNotifications(){
+        if(!notifications.length){
+            notifyBox.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec)">No new notifications</div>`;
+            pagination.innerHTML = "";
+            return;
+        }
+        const start = (currentPage-1)*rowsPerPage;
+        const pageData = notifications.slice(start,start+rowsPerPage);
+
+        notifyBox.innerHTML = pageData.map(n=>`
+<!--        <div class="notification ${n.read ? '' : 'unread'}">-->
+            <div class="notification ${n.readStatus ? '' : 'unread'}">
+            <p>${n.message}</p>
+<!--            <span class="date">${n.date}</span>-->
+            <span class="date">${n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</span>
+        </div>
+    `).join("");
+        renderPagination();
+    }
+
+    function renderPagination(){
+        const totalPages = Math.ceil(notifications.length / rowsPerPage);
+        let html = "";
+        for(let i=1;i<=totalPages;i++){
+            html += `<button class="${i===currentPage?'active':''}" onclick="gotoPage(${i})">${i}</button>`;
+        }
+        pagination.innerHTML = html;
+    }
+
+    function gotoPage(p){ currentPage = p; renderNotifications(); }
+
+    document.addEventListener("DOMContentLoaded", checkLogin);
+</script>
+</body>
+</html>

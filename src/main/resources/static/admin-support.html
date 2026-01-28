@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Bank | Admin Support</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root{
+            --bg-primary:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+            --bg-card:rgba(255,255,255,.05);
+            --border-color:rgba(255,255,255,.1);
+            --text-main:#fff;
+            --text-sec:rgba(255,255,255,.7);
+            --accent:#0ea5e9;
+            --accent-grad:linear-gradient(135deg,#0ea5e9,#2563eb);
+            --input-bg:rgba(0,0,0,.25);
+        }
+        body.light-mode{
+            --bg-primary:linear-gradient(135deg,#f0f4ff,#e0f2fe,#e0e7ff);
+            --bg-card:rgba(255,255,255,.85);
+            --border-color:rgba(255,255,255,.6);
+            --text-main:#0f172a;
+            --text-sec:#64748b;
+            --input-bg:#fff;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif}
+        body{background:var(--bg-primary);min-height:100vh;color:var(--text-main);padding:40px}
+
+        .container{max-width:900px;margin:auto}
+
+        .header{
+            background:var(--bg-card);
+            border:1px solid var(--border-color);
+            backdrop-filter:blur(15px);
+            border-radius:18px;
+            padding:20px 25px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:25px;
+        }
+        .header h1{font-size:20px;display:flex;gap:10px;align-items:center}
+        .btn-back{
+            background:none;border:1px solid var(--border-color);
+            color:var(--text-main);
+            padding:8px 16px;border-radius:8px;cursor:pointer;
+        }
+        .btn-back:hover{border-color:var(--accent)}
+
+        .card{
+            background:var(--bg-card);
+            border:1px solid var(--border-color);
+            border-radius:20px;
+            padding:25px;
+            backdrop-filter:blur(18px);
+        }
+
+        /* CONTROLS */
+        .controls{display:flex;gap:12px;margin-bottom:15px}
+        .controls input,.controls select{
+            padding:12px;border-radius:10px;
+            border:1px solid var(--border-color);
+            background:var(--input-bg);
+            color:var(--text-main);
+            outline:none;
+        }
+        .controls select{
+            background: var(--input-bg);          /* match search box */
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-weight: 500;
+        }
+        .controls select:hover{opacity:1}
+        .controls input{flex:1}
+
+        /* LIST */
+        .list-box{
+            border:1px solid var(--border-color);
+            border-radius:14px;
+            max-height:420px;
+            overflow-y:auto;
+        }
+        .ticket-row{
+            padding:16px;
+            border-bottom:1px solid var(--border-color);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            cursor:pointer;
+        }
+        .ticket-row:hover{background:rgba(255,255,255,.05)}
+        .ticket-title{font-weight:600}
+        .ticket-sub{font-size:12px;color:var(--text-sec)}
+
+        .badge{
+            padding:5px 12px;border-radius:20px;
+            font-size:11px;font-weight:600;
+        }
+        .OPEN{background:#10b981;color:#ffffff;}
+        .CLOSED{background:#64748b;color:#ffffff;}
+
+
+        /* PAGINATION */
+        .pagination{display:flex;justify-content:center;gap:8px;margin-top:15px}
+        .pagination button{
+            padding:6px 12px;border-radius:8px;
+            border:1px solid var(--border-color);
+            background:var(--bg-card);color:var(--text-main);
+        }
+        .pagination .active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+        /* MODAL */
+        .modal{
+            position:fixed;inset:0;
+            background:rgba(0,0,0,.6);
+            display:none;justify-content:center;align-items:center;
+            z-index:999;
+        }
+        .modal-box{
+            background:rgba(20,20,40,0.95);
+            border:1px solid var(--border-color);
+            border-radius:18px;
+            padding:25px;
+            width:100%;
+            max-width:520px;
+        }
+
+        .chat{display:flex;flex-direction:column;gap:12px;margin-top:15px}
+        .bubble{padding:12px;border-radius:12px}
+        .user{
+    background:#3b82f6;
+    color:#ffffff;
+}
+
+.admin{
+    background:#10b981;
+    color:#ffffff;
+}
+
+        textarea{
+            width:100%;margin-top:12px;
+            padding:12px;border-radius:10px;
+            border:1px solid var(--border-color);
+            background:var(--input-bg);color:var(--text-main);
+        }
+        .btn{
+            margin-top:12px;
+            background:var(--accent-grad);
+            border:none;padding:10px 22px;
+            border-radius:10px;color:#fff;font-weight:600;
+            cursor:pointer;
+        }
+
+        .theme-btn{
+            position:fixed;bottom:30px;right:30px;
+            width:45px;height:45px;border-radius:50%;
+            background:var(--bg-card);
+            border:1px solid var(--border-color);
+            cursor:pointer;font-size:20px;
+        }
+        /* ===== Admin Support Dropdown Fix ===== */
+        select {
+            background: var(--input-bg);        /* same as search box */
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* remove default browser white/grey */
+        select option {
+            background: #1e1b4b;   /* dark glass like cards */
+            color: #ffffff;
+        }
+
+        /* hover / focus – NO BLUE, only subtle */
+        select:focus {
+            border-color: rgba(255,255,255,0.35);
+            box-shadow: none;
+        }
+
+        /* light mode consistency */
+        body.light-mode select {
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        body.light-mode select option {
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        body.light-mode .modal-box{
+            background:#ffffff;
+        }
+
+        /* ===== TOAST (Admin Support) ===== */
+.toast{
+    position:fixed;
+    top:30px;
+    right:30px;
+    min-width:260px;
+    padding:14px 18px;
+    border-radius:14px;
+    font-weight:600;
+    display:none;
+    z-index:2000;
+    animation:toastIn .25s ease;
+}
+
+.toast.success{
+    background:#10b981;
+    color:#ffffff;
+}
+
+.toast.error{
+    background:#ef4444;
+    color:#ffffff;
+}
+
+@keyframes toastIn{
+    from{opacity:0;transform:translateY(-10px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+    </style>
+</head>
+
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()">🌙</button>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-headset"></i> Support Tickets</h1>
+        <button class="btn-back" onclick="goBack()">← Back</button>
+    </div>
+
+    <div class="card">
+        <div class="controls">
+            <input placeholder="Search by account / subject">
+            <select><option>All</option><option>OPEN</option><option>CLOSED</option></select>
+        </div>
+
+        <div class="list-box" id="ticketList"></div>
+
+        <div class="pagination">
+            <button class="active">1</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+    <div class="modal-box">
+        <h3 id="mSubject"></h3>
+        <p style="font-size:13px;color:var(--text-sec)" id="mMeta"></p>
+
+        <div class="chat">
+            <div class="bubble user" id="mUser"></div>
+            <div class="bubble admin" id="mAdmin" style="display:none"></div>
+        </div>
+
+        <textarea id="replyBox" placeholder="Type reply..." style="display:none"></textarea>
+        <button class="btn" id="sendBtn" onclick="sendReply()">Send Reply</button>
+        <button class="btn" onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    const API="http://localhost:8081";
+    const ADMIN_ACC = localStorage.getItem("adminId");
+    let currentTicket=null;
+
+    function handleOpen(el){
+    const ticket = JSON.parse(decodeURIComponent(el.dataset.ticket));
+    openModal(ticket);
+    }
+
+    function toggleTheme(){
+        document.body.classList.toggle("light-mode");
+        localStorage.setItem("theme",document.body.classList.contains("light-mode")?"light":"dark");
+    }
+    window.onload=()=>{
+        if(localStorage.getItem("theme")==="light")document.body.classList.add("light-mode");
+        loadTickets();
+    };
+
+    async function loadTickets(){
+        const res=await fetch(`${API}/support/all`);
+        const data=await res.json();
+        ticketList.innerHTML=data.length?data.map(t=>`
+        <div class="ticket-row"
+        data-ticket='${encodeURIComponent(JSON.stringify(t))}'
+        onclick="handleOpen(this)">
+
+            <div>
+                <div class="ticket-title">${t.subject}</div>
+                <div class="ticket-sub">Acc: ${t.accountNumber}</div>
+            </div>
+            <span class="badge ${t.status}">${t.status}</span>
+        </div>`).join(""):"<p style='padding:20px;text-align:center'>No tickets</p>";
+    }
+
+    function openModal(t){
+        currentTicket=t;
+        mSubject.innerText=t.subject;
+        mMeta.innerText=t.issueType+" • "+new Date(t.date).toLocaleString();
+        mUser.innerText=t.description;
+
+        if(t.adminReply){
+            mAdmin.style.display="block";
+            mAdmin.innerText=t.adminReply;
+            replyBox.style.display="none";
+            sendBtn.style.display="none";
+        }else{
+            mAdmin.style.display="none";
+            replyBox.style.display="block";
+            sendBtn.style.display="inline-block";
+        }
+        modal.style.display="flex";
+    }
+    function closeModal(){modal.style.display="none"}
+
+    function showToast(message, type="success"){
+    const toast = document.getElementById("toast");
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3000);
+}
+
+    async function sendReply(){
+    const reply = replyBox.value.trim();
+
+    if(!reply){
+        showToast("Reply can't be empty", "error");
+        return;
+    }
+
+    try{
+        const res = await fetch(`${API}/support/reply/${currentTicket.id}`,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "X-ADMIN-ACC": ADMIN_ACC
+            },
+            body: JSON.stringify({ reply })
+        });
+
+        const msg = await res.text(); // backend returns String
+
+        if(!res.ok || msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("can't")){
+            showToast(msg, "error");
+            return;
+        }
+
+        showToast(msg, "success");
+        closeModal();
+        loadTickets(); // refresh list with CLOSED status
+
+    }catch(e){
+        showToast("Server error. Try again.", "error");
+    }
+}
+
+    function goBack(){location.href="admin-dashboard.html"}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Bank | Passbook</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sec: rgba(255, 255, 255, 0.7);
+            --accent-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        body.light-mode {
+            --bg-primary: linear-gradient(135deg, #f0f4ff, #f5f3ff, #fae8ff);
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(102, 126, 234, 0.2);
+            --text-main: #1e1b4b;
+            --text-sec: #64748b;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', sans-serif; transition: 0.3s; }
+        body { background: var(--bg-primary); min-height: 100vh; padding: 40px; color: var(--text-main); }
+
+        .container { max-width: 800px; margin: 0 auto; }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+            background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); backdrop-filter: blur(10px);
+        }
+        .header h1 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .btn-back { text-decoration: none; color: var(--text-sec); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .btn-back:hover { color: #667eea; }
+
+        .balance-strip {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px; border-radius: 20px; color: white; text-align: right;
+            margin-bottom: 30px; box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        }
+        .balance-strip h2 { font-size: 36px; font-weight: 800; }
+        .balance-strip p { opacity: 0.9; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+
+        .list { display: flex; flex-direction: column; gap: 15px; }
+        .item {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .item:hover { transform: translateX(5px); border-color: #667eea; }
+
+        .info { display: flex; gap: 15px; align-items: center; }
+        .icon {
+            width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .deposit .icon { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .withdrawal .icon { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .transfer .icon { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+
+        .details h4 { font-size: 16px; margin-bottom: 2px; }
+        .details span { font-size: 12px; color: var(--text-sec); }
+
+        .amt { font-weight: 700; font-size: 16px; text-align: right; }
+        .deposit .amt { color: #10b981; }
+        .withdrawal .amt { color: #ef4444; }
+        .bal { display: block; font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+
+        .pg { display: flex; justify-content: center; gap: 10px; margin-top: 30px; }
+        .pg button { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); cursor: pointer; }
+        .pg .active { background: #667eea; color: white; border-color: #667eea; }
+
+        .theme-float { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border-color); z-index: 100; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<button class="theme-float" onclick="toggleTheme()">🌙</button>
+
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-file-invoice"></i> Passbook</h1>
+        <div style="display:flex; gap:20px;">
+            <a class="btn-back" href="user-dashboard.html">Dashboard</a>
+            <button class="btn-back" onclick="logout()" style="background:none; border:none; cursor:pointer; color:#ef4444;">Logout</button>
+        </div>
+    </div>
+
+    <div class="balance-strip">
+        <p>Current Balance</p>
+        <h2 id="currentBalance">₹ 0.00</h2>
+    </div>
+
+    <div class="list" id="transactionsList"></div>
+    <div class="pg" id="paginationControls"></div>
+</div>
+
+<script>
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        const btn = document.querySelector('.theme-float');
+        btn.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+        localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            document.querySelector('.theme-float').textContent = '☀️';
+        }
+    });
+
+    const API_BASE = "http://localhost:8081";
+    const accountNumber = localStorage.getItem("accountNumber");
+
+    let transactions = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    if(!accountNumber) location.href="user-login.html";
+
+    async function loadPassbook(){
+        // CORRECTION: Java Code uses /user/passbook/{accountNumber}
+        const r = await fetch(`${API_BASE}/user/passbook/${accountNumber}`);
+        transactions = await r.json();
+
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if(transactions.length){
+            // Ensure backend returns 'currBalance' or adjust this field
+            if(transactions[0].currBalance) {
+                document.getElementById("currentBalance").innerText = "₹ " + transactions[0].currBalance.toFixed(2);
+            }
+        }
+        render();
+    }
+
+    function getType(desc){
+        const d = desc.toLowerCase();
+        if(d.includes("deposit")) return "deposit";
+        if(d.includes("withdraw")) return "withdrawal";
+        return "transfer";
+    }
+
+    function render(){
+        const list = document.getElementById("transactionsList");
+        const pag = document.getElementById("paginationControls");
+
+        if(!transactions.length){
+            list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-sec)">No transactions yet</div>`;
+            pag.innerHTML = "";
+            return;
+        }
+
+        const totalPages = Math.ceil(transactions.length / itemsPerPage);
+        const slice = transactions.slice( (currentPage-1)*itemsPerPage, currentPage*itemsPerPage );
+
+        list.innerHTML = slice.map(t=>{
+            const type = getType(t.description);
+            let sign = "-";
+            if(type==="deposit" || t.description.toLowerCase().includes("received")) sign = "+";
+            const icon = type==="deposit"?'<i class="fas fa-arrow-down"></i>':type==="withdrawal"?'<i class="fas fa-arrow-up"></i>':'<i class="fas fa-exchange-alt"></i>';
+
+            return `
+        <div class="item ${type}">
+            <div class="info">
+                <div class="icon">${icon}</div>
+                <div class="details">
+                    <h4>${t.description}</h4>
+                    <span>${new Date(t.date).toLocaleString("en-IN")}</span>
+                </div>
+            </div>
+            <div>
+                <div class="amt">${sign}₹${t.amount.toFixed(2)}</div>
+                <span class="bal">Bal: ₹${t.currBalance.toFixed(2)}</span>
+            </div>
+        </div>`;
+        }).join("");
+
+        pag.innerHTML="";
+        for(let i=1;i<=totalPages;i++){
+            pag.innerHTML+=`<button class="${i===currentPage?'active':''}" onclick="go(${i})">${i}</button>`;
+        }
+    }
+
+    function go(p){currentPage=p;render()}
+    function logout(){localStorage.clear();location.href="user-login.html"}
+
+    loadPassbook();
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Bank | Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Dark Mode (Default) */
+            --bg-primary: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sec: rgba(255, 255, 255, 0.7);
+            --accent-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        body.light-mode {
+            /* Light Mode */
+            --bg-primary: linear-gradient(135deg, #f0f4ff, #f5f3ff, #fae8ff);
+            --bg-card: rgba(255, 255, 255, 0.65);
+            --border-color: rgba(255, 255, 255, 0.6);
+            --text-main: #1e1b4b;
+            --text-sec: #64748b;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            color: var(--text-main);
+        }
+
+        /* Animated Orbs */
+        body::before {
+            content: ''; position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(118, 75, 162, 0.4), transparent 70%);
+            top: -150px; right: -150px; border-radius: 50%; z-index: -1;
+            animation: float 10s ease-in-out infinite alternate;
+        }
+        body::after {
+            content: ''; position: absolute; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.4), transparent 70%);
+            bottom: -100px; left: -100px; border-radius: 50%; z-index: -1;
+            animation: float 12s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(30px, 30px); } }
+
+        /* Glass Card */
+        .container {
+            width: 100%; max-width: 420px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header { margin-bottom: 30px; }
+        .logo-icon {
+            font-size: 40px;
+            background: var(--accent-grad);
+            background-clip: text;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 10px; display: inline-block;
+        }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 5px; }
+        .header p { font-size: 14px; color: var(--text-sec); }
+
+        /* Form Styling */
+        .form-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        input {
+            width: 100%; padding: 14px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 15px; outline: none;
+        }
+        input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25); }
+
+        .btn {
+            width: 100%; padding: 14px;
+            background: var(--accent-grad);
+            border: none; border-radius: 12px;
+            color: white; font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+
+        .links { margin-top: 25px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+        .links a { color: var(--text-main); text-decoration: none; font-weight: 500; opacity: 0.8; }
+        .links a:hover { opacity: 1; color: #667eea; text-decoration: underline; }
+        .links span { color: var(--text-sec); }
+        .highlight { color: #f093fb; font-weight: 600; }
+
+        /* Theme Toggle */
+        .theme-btn {
+            position: absolute; top: 20px; right: 20px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-main); width: 40px; height: 40px;
+            border-radius: 50%; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 18px;
+            backdrop-filter: blur(10px); z-index: 100;
+        }
+
+        /* Messages */
+        .message { padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: none; }
+        .message.success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .message.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .message.show { display: block; }
+    </style>
+</head>
+<body>
+
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-university logo-icon"></i>
+            <h1>Nova Bank</h1>
+            <p>Welcome back! Please login to continue.</p>
+        </div>
+
+        <div id="loginMessage" class="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="loginUsername" placeholder="Enter your username" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn">Sign In</button>
+        </form>
+
+        <div class="links">
+            <span>New here? <a href="user-signup.html" class="highlight">Create Account</a></span>
+            <a href="home.html">← Back to Home</a>
+        </div>
+    </div>
+
+<script>
+    // --- THEME TOGGLE LOGIC ---
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        const btn = document.querySelector('.theme-btn');
+        const isLight = document.body.classList.contains('light-mode');
+        btn.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            document.querySelector('.theme-btn').textContent = '☀️';
+        }
+    });
+
+    // --- ORIGINAL JAVASCRIPT ---
+    const API_URL = "http://localhost:8081";
+
+    function showMessage(id, text, type) {
+        const el = document.getElementById(id);
+        el.innerText = text;
+        el.className = "message " + type + " show";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const loginData = {
+            username: document.getElementById("loginUsername").value,
+            password: document.getElementById("loginPassword").value
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/auth/user/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(loginData)
+            });
+
+            const result = (await response.text()).trim(); 
+
+            if (result.startsWith("NB")) {
+                localStorage.clear();
+                localStorage.setItem("accountNumber", result);
+
+                showMessage("loginMessage", "Login successful! Redirecting...", "success");
+
+                setTimeout(() => {
+                    window.location.href = "user-dashboard.html";
+                }, 800);
+            } else {
+                showMessage("loginMessage", result, "error");
+            }
+
+        } catch (err) {
+            showMessage("loginMessage", "Server error. Please try again.", "error");
+            console.error(err);
+        }
+    });
+</script>
+</body>
+</html>
