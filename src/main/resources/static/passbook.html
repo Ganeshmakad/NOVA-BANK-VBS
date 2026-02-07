@@ -27,9 +27,17 @@
         .container { max-width: 800px; margin: 0 auto; }
 
         .header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
-            background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); backdrop-filter: blur(10px);
-        }
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: var(--bg-card);
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+}
+
         .header h1 { font-size: 20px; display: flex; align-items: center; gap: 10px; }
         .btn-back { text-decoration: none; color: var(--text-sec); font-weight: 600; display: flex; align-items: center; gap: 5px; }
         .btn-back:hover { color: #667eea; }
@@ -80,8 +88,9 @@
     <div class="header">
         <h1><i class="fas fa-file-invoice"></i> Passbook</h1>
         <div style="display:flex; gap:20px;">
-            <a class="btn-back" href="user-dashboard.html">Dashboard</a>
-            <button class="btn-back" onclick="logout()" style="background:none; border:none; cursor:pointer; color:#ef4444;">Logout</button>
+            <a class="btn-back" href="user-dashboard.html">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
         </div>
     </div>
 
