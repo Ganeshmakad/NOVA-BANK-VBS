@@ -71,12 +71,4 @@ public class AdminNotificationController {
          notificationRepo.save(n);
     }
 
-
-
-
-
-
-
-
-
 }

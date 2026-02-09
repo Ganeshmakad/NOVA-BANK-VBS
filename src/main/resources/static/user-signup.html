@@ -93,6 +93,11 @@
 </div>
 
 <script>
+    const existingAcc = localStorage.getItem("accountNumber");
+    if (existingAcc) {
+        window.location.href = "user-dashboard.html";
+    }
+
     function toggleTheme() {
         document.body.classList.toggle('light-mode');
         const btn = document.querySelector('.theme-btn');
@@ -117,6 +122,10 @@
 
     document.getElementById("signupForm").addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        const msgBox = document.getElementById("signupMessage");
+        msgBox.className = "msg";
+        msgBox.style.display = "none";
 
         const data = {
             name: document.getElementById("name").value,

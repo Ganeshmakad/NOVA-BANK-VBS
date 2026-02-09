@@ -129,7 +129,7 @@
         <div class="btn-group">
             <button class="btn btn-login" onclick="location.href='user-login.html'">Login</button>
             <button class="btn btn-signup" onclick="location.href='user-signup.html'">Sign Up</button>
-            <button class="btn btn-signup" style="border-color: #f093fb; color: #f093fb;" onclick="location.href='user-support.html'">Support</button>
+            <button class="btn btn-signup" style="border-color: #f093fb; color: #f093fb;" onclick="goToSupport()">Support</button>
         </div>
     </div>
 
@@ -145,6 +145,18 @@
 </div>
 
 <script>
+
+    function goToSupport() {
+        const isLoggedIn = localStorage.getItem("accountNumber");
+
+        if (!isLoggedIn) {
+            // Agar permanent login nahi hai, toh guest flags clean kar do
+            localStorage.removeItem("guestVerified");
+            localStorage.removeItem("guestAccount");
+        }
+        location.href = 'user-support.html';
+    }
+
     function toggleTheme() {
         const body = document.body;
         body.classList.toggle('light-mode');
