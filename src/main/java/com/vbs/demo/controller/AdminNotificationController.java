@@ -24,7 +24,8 @@ public class AdminNotificationController {
     HistoryRepo historyRepo;
 
     @PostMapping("/admin/notify")
-    public String sendNotification(@RequestBody NotificationDto obj)
+    public String sendNotification(@RequestBody NotificationDto obj,
+                                   @RequestHeader("X-ADMIN-ACC") int adminId)
     {
        if(obj.getMessage() == null || obj.getMessage().isEmpty())
            return "Message cannot be empty";
@@ -34,11 +35,11 @@ public class AdminNotificationController {
            List<User> users = userRepo.findAll();
            for (User u : users)
            {
-               saveNoti(u.getAccountNumber(), obj.getMessage(), obj.getAdminId());
+               saveNoti(u.getAccountNumber(), obj.getMessage(), adminId);
            }
            History h = new History();
            h.setTargetId("NOTIFICATION");
-           h.setDescription("Notification sent by Admin ADM"+obj.getAdminId()+" to All Customers");
+           h.setDescription("Notification sent by Admin ADM"+adminId+" to All Customers");
            historyRepo.save(h);
            return "Notification sent to all users";
        }
@@ -50,11 +51,11 @@ public class AdminNotificationController {
 
            for (String acc : obj.getAccounts())
            {
-               saveNoti(acc,obj.getMessage(), obj.getAdminId());
+               saveNoti(acc,obj.getMessage(), adminId);
            }
            History h = new History();
            h.setTargetId("NOTIFICATION");
-           h.setDescription("Notification sent by Admin ADM"+obj.getAdminId()+" to "+obj.getAccounts().size()+" Customers");
+           h.setDescription("Notification sent by Admin ADM"+adminId+" to "+obj.getAccounts().size()+" Customers");
            historyRepo.save(h);
            return "Notification sent to selected users";
        }
