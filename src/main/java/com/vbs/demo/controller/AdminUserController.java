@@ -1,7 +1,6 @@
 package com.vbs.demo.controller;
 
 import com.vbs.demo.dto.AdminReplyDto;
-import com.vbs.demo.dto.RaiseQueryDto;
 import com.vbs.demo.dto.UpdateDto;
 import com.vbs.demo.models.*;
 import com.vbs.demo.repositories.*;
