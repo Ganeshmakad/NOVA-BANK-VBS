@@ -131,7 +131,6 @@ public class AdminUserController {
             @RequestHeader ("X-ADMIN-ACC") int adminId)
     {
 
-        // ✅ VERIFY ADMIN
         Admin admin = adminRepo.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Unauthorized Admin"));
 
@@ -211,6 +210,42 @@ public class AdminUserController {
     @GetMapping("/all-users")
     public List<User> getAllUsers(){
         return userRepo.findAll();
+    }
+
+    @PostMapping("/admin/block-user/{accNo}")
+    public String block(
+            @PathVariable String accNo,
+            @RequestParam boolean block,
+            @RequestHeader("X-ADMIN-ACC") int adminId
+    )
+    {
+        User user = userRepo.findByAccountNumber(accNo)
+                .orElseThrow(()->new RuntimeException("Invalid Account"));
+
+        user.setBlocked(block);
+        userRepo.save(user);
+
+        History h = new History();
+        h.setTargetId(accNo);
+        h.setDescription(
+                block
+                        ? "Account BLOCKED by Admin ADM" + adminId
+                        : "Account UNBLOCKED by Admin ADM" + adminId
+        );
+        historyRepo.save(h);
+
+        Notification n = new Notification();
+        n.setAccountNumber(accNo);
+        n.setAdminId(adminId);
+        n.setReadStatus(false);
+        n.setMessage(
+                block
+                        ? "⚠️ Your account has been blocked by Nova Bank. Please contact support."
+                        : "✅ Your account has been unblocked. You may continue using services."
+        );
+        notificationRepo.save(n);
+
+        return block ? "User blocked successfully" : "User unblocked successfully";
     }
 }
 
