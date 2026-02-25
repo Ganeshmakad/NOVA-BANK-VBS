@@ -31,6 +31,8 @@ public class User {
     String gender;
     @Column(nullable = false)
     double balance;
+    @Column(nullable = false)
+    boolean blocked = false;
     @CreationTimestamp
     @Column(nullable = false,updatable = false)
     LocalDateTime date;
