@@ -156,7 +156,7 @@
     <div class="nav-item" onclick="passbook()"><i class="fas fa-wallet"></i> Passbook</div>
     <div class="nav-item" onclick="openUpdateModal()"><i class="fas fa-user-cog"></i> Profile</div>
     <div class="nav-item" onclick="support()"><i class="fas fa-headset"></i> Support</div>
-    <button class="nav-item logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    <button class="nav-item logout-btn" onclick="openLogoutModal()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </div>
 
 <div class="main-content">
@@ -264,6 +264,21 @@
     </div>
 </div>
 
+<!-- LOGOUT CONFIRM MODAL -->
+<div class="modal" id="logoutModal">
+    <div class="modal-box">
+        <h3>Confirm Logout</h3>
+        <p style="color:var(--text-sec); margin:10px 0 25px; text-align:center;">
+            Are you sure you want to logout?
+        </p>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+            <button class="btn-confirm" onclick="confirmLogout()">Logout</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- THEME TOGGLE ---
     function toggleTheme() {
@@ -278,6 +293,19 @@
             document.querySelector('.theme-btn').textContent = '☀️';
         }
     });
+
+    function handleAuthError(res) {
+        if (res.status === 401 || res.status === 403) {
+            localStorage.clear();
+            sessionStorage.clear();
+            showToast("Session expired. Please login again.", true);
+            setTimeout(() => {
+                location.href = "home.html";
+            }, 1500);
+            return true;
+        }
+        return false;
+    }
 
     const API_BASE="http://localhost:8081";
     let accountNumber=localStorage.getItem("accountNumber");
@@ -300,11 +328,16 @@
 
     function loadDashboard(){
         fetch(`${API_BASE}/user/dashboard/${accountNumber}`)
-            .then(r=>r.json()).then(d=>{
-            welcomeUser.innerText="Welcome, "+d.name;
-            balance.innerText="₹ "+d.balance.toFixed(2);
-            accountNo.innerText=d.accountNumber;
-        });
+            .then(res => {
+                if (handleAuthError(res)) return;
+                    return res.json();
+            })
+            .then(d => {
+                if (!d) return;
+                welcomeUser.innerText = "Welcome, " + d.name;
+                balance.innerText = "₹ " + d.balance.toFixed(2);
+                accountNo.innerText = d.accountNumber;
+            });
     }
 
     function openModal(action){
@@ -331,6 +364,7 @@
             body:JSON.stringify(body)
         })
             .then(async (res) => {
+                if (handleAuthError(res)) return;
                 const text = await res.text();
                 closeModal();
                 if(text.includes("Successful")) {
@@ -357,8 +391,9 @@
                 value:updateValue.value
             })
         })
-            .then(async (res) => {
-                const text = await res.text();
+                .then(async (res) => {
+                    if (handleAuthError(res)) return;
+                    const text = await res.text();
                 closeUpdateModal();
                 if(text.includes("Updated Successfully")) {
                     showToast(text);
@@ -371,7 +406,10 @@
 
     function loadUnreadNotificationDot() {
     fetch(`${API_BASE}/notifications/unread-count/${accountNumber}`)
-        .then(res => res.json())
+        .then(res => {
+            if (handleAuthError(res)) return;
+            return res.json();
+        })
         .then(count => {
             const dot = document.getElementById("notifDot");
             if (count > 0) {
@@ -388,7 +426,20 @@
 
     function passbook(){location.href="passbook.html";}
     function support(){location.href="user-support.html";}
-    function logout(){localStorage.clear();location.href="user-login.html";}
+    function openLogoutModal(){
+    document.getElementById("logoutModal").style.display = "flex";
+}
+
+function closeLogoutModal(){
+    document.getElementById("logoutModal").style.display = "none";
+}
+
+function confirmLogout(){
+    localStorage.clear();
+    sessionStorage.clear();
+    location.href = "home.html";
+}
+
     loadDashboard();
     loadUnreadNotificationDot();
 </script>
