@@ -81,7 +81,8 @@
         .card-label { font-size: 14px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
         .balance-amount { font-size: 42px; font-weight: 800; margin: 10px 0; }
         .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
-        .acc-num { font-family: monospace; font-size: 16px; opacity: 0.8; letter-spacing: 2px; }
+        .acc-num { font-family: monospace; font-size: 22px; font-weight: 500; opacity: 0.9; letter-spacing: 10px; }
+        #toggleAccIcon { font-size: 16px; }
 
         /* Action Grid */
         .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
@@ -146,6 +147,11 @@
             .main-content { margin-left: 0; padding: 20px; }
             .balance-amount { font-size: 32px; }
         }
+        #toggleAccIcon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
     </style>
 </head>
 
@@ -180,8 +186,13 @@
             <div class="balance-amount" id="balance">₹ 0.00</div>
         </div>
         <div class="card-footer">
-            <div class="acc-num" id="accountNo">.... .... .... ....</div>
-            <i class="fab fa-cc-visa" style="font-size: 30px; opacity: 0.8;"></i>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="acc-num" id="accountNo">.... .... .... ....</div>
+                <i id="toggleAccIcon"
+                   class="fas fa-eye"
+                   style="cursor:pointer; opacity:0.8;"
+                   onclick="toggleAccountVisibility()"></i>
+            </div>            <i class="fab fa-cc-visa" style="font-size: 30px; opacity: 0.8;"></i>
         </div>
     </div>
 
@@ -309,6 +320,8 @@
 
     const API_BASE="http://localhost:8081";
     let accountNumber=localStorage.getItem("accountNumber");
+    let fullAccountNumber = "";
+    let isAccountVisible = false;
     let currentAction="";
 
     if(!accountNumber) location.href="user-login.html";
@@ -326,6 +339,33 @@
         setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
 
+    function maskAccountNumber(accNo) {
+        if (!accNo || accNo.length <= 2) return accNo;
+
+        const firstChar = accNo.charAt(0);
+        const lastChar = accNo.charAt(accNo.length - 1);
+
+        const maskedMiddle = "*".repeat(accNo.length - 2);
+
+        return firstChar + maskedMiddle + lastChar;
+    }
+
+    function toggleAccountVisibility() {
+        const icon = document.getElementById("toggleAccIcon");
+
+        if (!fullAccountNumber) return;
+
+        if (isAccountVisible) {
+            accountNo.innerText = maskAccountNumber(fullAccountNumber);
+            icon.className = "fas fa-eye";
+            isAccountVisible = false;
+        } else {
+            accountNo.innerText = fullAccountNumber;
+            icon.className = "fas fa-eye-slash";
+            isAccountVisible = true;
+        }
+    }
+
     function loadDashboard(){
         fetch(`${API_BASE}/user/dashboard/${accountNumber}`)
             .then(res => {
@@ -336,7 +376,8 @@
                 if (!d) return;
                 welcomeUser.innerText = "Welcome, " + d.name;
                 balance.innerText = "₹ " + d.balance.toFixed(2);
-                accountNo.innerText = d.accountNumber;
+                fullAccountNumber = d.accountNumber;
+                accountNo.innerText = maskAccountNumber(fullAccountNumber);
             });
     }
 
