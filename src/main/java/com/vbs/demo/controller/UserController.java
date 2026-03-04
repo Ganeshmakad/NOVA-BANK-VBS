@@ -1,9 +1,6 @@
 package com.vbs.demo.controller;
 
-import com.vbs.demo.dto.DisplayDto;
-import com.vbs.demo.dto.LoginDto;
-import com.vbs.demo.dto.RaiseQueryDto;
-import com.vbs.demo.dto.VerifyDto;
+import com.vbs.demo.dto.*;
 import com.vbs.demo.models.History;
 import com.vbs.demo.models.Notification;
 import com.vbs.demo.models.RaiseQuery;
@@ -83,6 +80,21 @@ public class UserController {
         displayDto.setBalance(user.getBalance());
         displayDto.setAccountNumber(user.getAccountNumber());
         return displayDto;
+    }
+
+    @GetMapping("/user/profile/{accountNumber}")
+    public ProfileDto getProfile(@PathVariable String accountNumber)
+    {
+        User user = userRepo.findByAccountNumber(accountNumber)
+                .orElseThrow(()-> new RuntimeException("User not Found"));
+        ProfileDto profileDto = new ProfileDto();
+        profileDto.setName(user.getName());
+        profileDto.setAccountNumber(user.getAccountNumber());
+        profileDto.setEmail(user.getEmail());
+        profileDto.setGender(user.getGender());
+        profileDto.setBalance(user.getBalance());
+        profileDto.setBlocked(user.isBlocked());
+        return profileDto;
     }
 
     @PostMapping("/support/verify")
