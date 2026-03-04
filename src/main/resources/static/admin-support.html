@@ -274,9 +274,16 @@
 <div id="toast" class="toast"></div>
 
 <script>
-    const API="http://localhost:8081";
-    const ADMIN_ACC = localStorage.getItem("adminId");
+    const API=window.location.origin;
+    const ADMIN_ACC = localStorage.getItem("adminAccount");
     let currentTicket=null;
+
+    (function checkAdminAuth(){
+        const adminAcc = localStorage.getItem("adminAccount");
+        if(!adminAcc){
+            location.href = "admin-login.html";
+        }
+    })();
 
     function handleOpen(el){
     const ticket = JSON.parse(decodeURIComponent(el.dataset.ticket));
@@ -311,7 +318,8 @@
     function openModal(t){
         currentTicket=t;
         mSubject.innerText=t.subject;
-        mMeta.innerText=t.issueType+" • "+new Date(t.date).toLocaleString();
+        const time = t.queryDate || t.createdAt || t.date;
+        mMeta.innerText = t.issueType + " • " + new Date(time).toLocaleString();
         mUser.innerText=t.description;
 
         if(t.adminReply){
@@ -365,6 +373,7 @@
         }
 
         showToast(msg, "success");
+        replyBox.value = "";
         closeModal();
         loadTickets(); // refresh list with CLOSED status
 

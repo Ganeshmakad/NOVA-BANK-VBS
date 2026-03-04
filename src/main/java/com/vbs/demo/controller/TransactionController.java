@@ -1,6 +1,12 @@
 package com.vbs.demo.controller;
 
 
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
 import com.vbs.demo.dto.TransactionDto;
 import com.vbs.demo.dto.TransferDto;
 import com.vbs.demo.models.Transaction;
@@ -8,8 +14,12 @@ import com.vbs.demo.models.User;
 import com.vbs.demo.repositories.TransactionRepo;
 import com.vbs.demo.repositories.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -105,6 +115,54 @@ public class TransactionController {
     public List<Transaction> getpassbook(@PathVariable String accountNumber)
     {
         return transactionRepo.findAllByAccountNumber(accountNumber);
+    }
+
+    @GetMapping("/user/passbook/pdf/{accountNumber}")
+    public ResponseEntity<byte[]> downloadPassbook(@PathVariable String accountNumber) throws Exception {
+
+        List<Transaction> list = transactionRepo.findByAccountNumberOrderByDateDesc(accountNumber);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        PdfWriter writer = new PdfWriter(out);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document doc = new Document(pdf);
+
+        doc.add(new Paragraph("NOVA BANK")
+                .setBold()
+                .setFontSize(20)
+                .setTextAlignment(TextAlignment.CENTER));
+
+        doc.add(new Paragraph("Account Statement")
+                .setTextAlignment(TextAlignment.CENTER));
+
+        doc.add(new Paragraph("\nAccount Number: " + accountNumber));
+        doc.add(new Paragraph("Generated On: " + LocalDate.now()));
+        doc.add(new Paragraph("\n"));
+
+        Table table = new Table(4).useAllAvailableWidth();
+
+        table.addHeaderCell("Date");
+        table.addHeaderCell("Description");
+        table.addHeaderCell("Amount");
+        table.addHeaderCell("Balance");
+
+        for(Transaction t : list) {
+            table.addCell(t.getDate().toString());
+            table.addCell(t.getDescription());
+            table.addCell(String.valueOf(t.getAmount()));
+            table.addCell(String.valueOf(t.getCurrBalance()));
+        }
+
+        doc.add(table);
+        doc.close();
+
+        byte[] pdfBytes = out.toByteArray();
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition","attachment; filename=passbook.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
     }
 
 }

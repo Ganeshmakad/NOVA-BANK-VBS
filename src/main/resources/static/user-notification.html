@@ -85,7 +85,39 @@
         }
     });
 
-    const API_URL = "http://localhost:8081";
+    function showToast(msg, isError = false){
+        const t = document.createElement("div");
+        t.style.position = "fixed";
+        t.style.top = "20px";
+        t.style.right = "20px";
+        t.style.padding = "12px 18px";
+        t.style.borderRadius = "10px";
+        t.style.fontSize = "14px";
+        t.style.zIndex = "2000";
+        t.style.color = "#fff";
+        t.style.background = isError
+            ? "linear-gradient(135deg,#ef4444,#dc2626)"
+            : "linear-gradient(135deg,#16a34a,#22c55e)";
+        t.innerText = msg;
+
+        document.body.appendChild(t);
+        setTimeout(()=> t.remove(), 3000);
+    }
+
+    function handleAuthError(res) {
+        if (res.status === 401 || res.status === 403) {
+            localStorage.clear();
+            sessionStorage.clear();
+            showToast("Session expired. Please login again.", true);
+            setTimeout(() => {
+                location.href = "home.html";
+            }, 1500);
+            return true;
+        }
+        return false;
+    }
+
+    const API_URL = window.location.origin;
     let notifications = [];
     let currentPage = 1;
     const rowsPerPage = 6;
@@ -93,10 +125,10 @@
 
     // --- LOGIC FIX ---
     function checkLogin(){
-        // Check for accountNumber which is what user-login.html saves
         accNo = localStorage.getItem("accountNumber");
         if(!accNo){
-            location.href = "user-login.html";
+            showToast("Please login first", true);
+            setTimeout(() => location.href = "home.html", 1200);
         } else {
             loadNotifications();
         }
@@ -104,21 +136,37 @@
 
     async function loadNotifications(){
         try{
-            // Note: Since backend for notifications isn't ready, this fetch might fail.
-            // When ready, ensure endpoint matches /notifications/{accountNumber}
-            const res = await fetch(`${API_URL}/notifications/${accNo}`)
-            notifications = await res.json();
+            const res = await fetch(`${API_URL}/notifications/${accNo}`);
+
+            if (handleAuthError(res)) return;
+
+            const data = await res.json();
+
+            if (!Array.isArray(data)) {
+                notifyBox.innerHTML =
+                    `<div style="text-align:center; padding:30px; color:var(--text-sec)">
+                        No notifications
+                     </div>`;
+                pagination.innerHTML = "";
+                return;
+            }
+
+            notifications = data;
             currentPage = 1;
             renderNotifications();
 
+            // ✅ MARK AS READ ONLY AFTER SUCCESS
             await fetch(`${API_URL}/notifications/read-all/${accNo}`, {
-            method: "POST"
-        });
-        }catch{
-            notifyBox.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sec)">No new notifications</div>`;
-             `<div style="text-align:center; padding:30px; color:var(--text-sec)">
-             No new notifications
-           </div>`;
+                method: "POST"
+            });
+
+        } catch (err){
+            showToast("Unable to load notifications", true);
+            notifyBox.innerHTML =
+                `<div style="text-align:center; padding:30px; color:var(--text-sec)">
+                    No notifications
+                 </div>`;
+            pagination.innerHTML = "";
         }
     }
 
@@ -134,7 +182,7 @@
         notifyBox.innerHTML = pageData.map(n=>`
 <!--        <div class="notification ${n.read ? '' : 'unread'}">-->
             <div class="notification ${n.readStatus ? '' : 'unread'}">
-            <p>${n.message}</p>
+            <p>${n.message || "Notification"}</p>
 <!--            <span class="date">${n.date}</span>-->
             <span class="date">${n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}</span>
         </div>

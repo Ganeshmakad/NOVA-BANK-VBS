@@ -9,4 +9,6 @@ public interface TransactionRepo extends JpaRepository<Transaction,Integer> {
 
 
     List<Transaction> findAllByAccountNumber(String accountNumber);
+
+    List<Transaction> findByAccountNumberOrderByDateDesc(String accountNumber);
 }

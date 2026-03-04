@@ -122,6 +122,50 @@
             background: rgba(255,255,255,0.05); color: var(--text-main); outline: none;
         }
 
+        .profile-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 35px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
+            backdrop-filter: blur(30px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .profile-box h3 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+
+        .profile-row {
+            margin-bottom: 18px;
+        }
+
+        .profile-row span {
+            display: block;
+            font-size: 13px;
+            color: var(--text-sec);
+            margin-bottom: 6px;
+        }
+
+        .profile-row p {
+            font-size: 16px;
+            font-weight: 600;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #profileWarning {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            display: none;
+        }
+
         /* 🔥 THE DROPDOWN FIX YOU WANTED */
         select option {
             background-color: var(--option-bg);
@@ -160,7 +204,7 @@
     <div class="brand"><i class="fas fa-cube"></i> Nova Bank</div>
     <div class="nav-item active"><i class="fas fa-home"></i> Dashboard</div>
     <div class="nav-item" onclick="passbook()"><i class="fas fa-wallet"></i> Passbook</div>
-    <div class="nav-item" onclick="openUpdateModal()"><i class="fas fa-user-cog"></i> Profile</div>
+    <div class="nav-item" onclick="openProfilePreview()"><i class="fas fa-user-cog"></i> View Profile</div>
     <div class="nav-item" onclick="support()"><i class="fas fa-headset"></i> Support</div>
     <button class="nav-item logout-btn" onclick="openLogoutModal()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </div>
@@ -219,7 +263,7 @@
         </div>
         <div class="action-card" onclick="openUpdateModal()">
             <div class="icon-box"><i class="fas fa-user-edit"></i></div>
-            <h4>Profile</h4>
+            <h4>Edit Profile</h4>
             <p>Update Info</p>
         </div>
         <div class="action-card" onclick="support()">
@@ -275,6 +319,49 @@
     </div>
 </div>
 
+<!-- PROFILE PREVIEW MODAL -->
+<div id="profilePreviewModal" class="modal">
+    <div class="profile-box">
+        <h3>My Profile</h3>
+
+        <div class="profile-row">
+            <span>Account Number</span>
+            <p id="profileAcc"></p>
+        </div>
+
+        <div class="profile-row">
+            <span>Full Name</span>
+            <p id="profileName"></p>
+        </div>
+
+        <div class="profile-row">
+            <span>Email</span>
+            <p id="profileEmail"></p>
+        </div>
+
+        <div class="profile-row">
+            <span>Gender</span>
+            <p id="profileGender"></p>
+        </div>
+
+        <div class="profile-row">
+            <span>Status</span>
+            <p id="profileStatus"></p>
+        </div>
+
+        <div id="profileWarning" style="display:none;"></div>
+
+        <div class="profile-row">
+            <span>Current Balance</span>
+            <p id="profileBalance"></p>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeProfilePreview()">Close</button>
+            <button class="btn-confirm" onclick="switchToUpdate()">Update Profile</button>
+        </div>
+    </div>
+</div>
 <!-- LOGOUT CONFIRM MODAL -->
 <div class="modal" id="logoutModal">
     <div class="modal-box">
@@ -318,7 +405,7 @@
         return false;
     }
 
-    const API_BASE="http://localhost:8081";
+    const API_BASE=window.location.origin;
     let accountNumber=localStorage.getItem("accountNumber");
     let fullAccountNumber = "";
     let isAccountVisible = false;
@@ -379,6 +466,52 @@
                 fullAccountNumber = d.accountNumber;
                 accountNo.innerText = maskAccountNumber(fullAccountNumber);
             });
+    }
+
+    function openProfilePreview() {
+        fetch(`${API_BASE}/user/profile/${accountNumber}`)
+            .then(res => {
+                if (handleAuthError(res)) return;
+                return res.json();
+            })
+            .then(d => {
+                if (!d) return;
+
+                profileAcc.innerText = d.accountNumber;
+                profileName.innerText = d.name;
+                profileEmail.innerText = d.email || "-";
+                profileGender.innerText = d.gender || "-";
+                profileBalance.innerText = "₹ " + d.balance.toFixed(2);
+
+                // --- STATUS LOGIC ---
+                const statusEl = document.getElementById("profileStatus");
+                const warningEl = document.getElementById("profileWarning");
+
+                if (d.blocked) {
+                    statusEl.innerText = "BLOCKED";
+                    statusEl.style.color = "#ef4444";
+
+                    warningEl.innerText = "⚠ Your account is currently restricted. Please contact support for assistance.";
+                    warningEl.style.background = "rgba(239,68,68,0.1)";
+                    warningEl.style.color = "#ef4444";
+                    warningEl.style.display = "block";
+                } else {
+                    statusEl.innerText = "ACTIVE";
+                    statusEl.style.color = "#10b981";
+                    warningEl.style.display = "none";
+                }
+
+                document.getElementById("profilePreviewModal").style.display = "flex";
+            });
+    }
+
+    function closeProfilePreview() {
+        document.getElementById("profilePreviewModal").style.display = "none";
+    }
+
+    function switchToUpdate() {
+        closeProfilePreview();
+        openUpdateModal();
     }
 
     function openModal(action){

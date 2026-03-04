@@ -162,6 +162,10 @@
     </div>
 
 <script>
+    const existingAcc = localStorage.getItem("accountNumber");
+    if (existingAcc) {
+        window.location.href = "user-dashboard.html";
+    }
     // --- THEME TOGGLE LOGIC ---
     function toggleTheme() {
         document.body.classList.toggle('light-mode');
@@ -178,7 +182,7 @@
     });
 
     // --- ORIGINAL JAVASCRIPT ---
-    const API_URL = "http://localhost:8081";
+    const API_URL = window.location.origin;
 
     function showMessage(id, text, type) {
         const el = document.getElementById(id);
@@ -188,7 +192,7 @@
 
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-
+        document.getElementById("loginMessage").className = "message";
         const loginData = {
             username: document.getElementById("loginUsername").value,
             password: document.getElementById("loginPassword").value

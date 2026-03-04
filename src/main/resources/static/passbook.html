@@ -78,6 +78,32 @@
         .pg .active { background: #667eea; color: white; border-color: #667eea; }
 
         .theme-float { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--border-color); z-index: 100; font-size: 20px; }
+        .header-actions{
+    display:flex;
+    gap:15px;
+    align-items:center;
+}
+
+.download-btn{
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    border:none;
+    color:white;
+    padding:10px 16px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+.download-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(0,0,0,0.25);
+}
+
     </style>
 </head>
 <body>
@@ -87,9 +113,14 @@
 <div class="container">
     <div class="header">
         <h1><i class="fas fa-file-invoice"></i> Passbook</h1>
-        <div style="display:flex; gap:20px;">
-            <a class="btn-back" href="user-dashboard.html">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
+
+        <div class="header-actions">
+            <button onclick="downloadPassbook()" class="download-btn">
+                <i class="fas fa-download"></i> Download Statement
+            </button>
+
+            <a class="btn-back" href="#" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Dashboard
             </a>
         </div>
     </div>
@@ -101,6 +132,19 @@
 
     <div class="list" id="transactionsList"></div>
     <div class="pg" id="paginationControls"></div>
+</div>
+
+<div id="toast" style="
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:rgba(0,0,0,0.8);
+    color:#fff;
+    padding:12px 18px;
+    border-radius:10px;
+    display:none;
+    font-size:14px;
+    z-index:2000;">
 </div>
 
 <script>
@@ -118,7 +162,41 @@
         }
     });
 
-    const API_BASE = "http://localhost:8081";
+    function handleAuthError(res) {
+        if (res.status === 401 || res.status === 403) {
+            localStorage.clear();
+            sessionStorage.clear();
+            showToast("Session expired. Please login again.", true);
+            setTimeout(() => {
+                location.href = "home.html";
+            }, 1500);
+            return true;
+        }
+        return false;
+    }
+
+    function showToast(msg, isError = false){
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.style.background = isError
+            ? "linear-gradient(135deg,#ef4444,#dc2626)"
+            : "linear-gradient(135deg,#16a34a,#22c55e)";
+        t.style.display = "block";
+        setTimeout(()=> t.style.display="none", 3000);
+    }
+
+    function goBack(){
+        if (!localStorage.getItem("accountNumber")) {
+            location.href = "home.html";
+        } else {
+            location.href = "user-dashboard.html";
+        }
+    }
+    function downloadPassbook(){
+        window.open(`${API_BASE}/user/passbook/pdf/${accountNumber}`);
+    }
+
+    const API_BASE = window.location.origin;
     const accountNumber = localStorage.getItem("accountNumber");
 
     let transactions = [];
@@ -128,19 +206,30 @@
     if(!accountNumber) location.href="user-login.html";
 
     async function loadPassbook(){
-        // CORRECTION: Java Code uses /user/passbook/{accountNumber}
-        const r = await fetch(`${API_BASE}/user/passbook/${accountNumber}`);
-        transactions = await r.json();
+        try {
+            const r = await fetch(`${API_BASE}/user/passbook/${accountNumber}`);
 
-        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (handleAuthError(r)) return;
 
-        if(transactions.length){
-            // Ensure backend returns 'currBalance' or adjust this field
-            if(transactions[0].currBalance) {
-                document.getElementById("currentBalance").innerText = "₹ " + transactions[0].currBalance.toFixed(2);
+            const data = await r.json();
+            if (!Array.isArray(data)) {
+                showToast("Unable to load passbook", true);
+                return;
             }
+
+            transactions = data;
+
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (transactions.length && transactions[0].currBalance !== undefined) {
+                document.getElementById("currentBalance").innerText =
+                    "₹ " + transactions[0].currBalance.toFixed(2);
+            }
+
+            render();
+        } catch (e) {
+            showToast("Server connection error", true);
         }
-        render();
     }
 
     function getType(desc){
