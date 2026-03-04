@@ -25,6 +25,8 @@ public class TransactionController {
     {
         User user = userRepo.findByAccountNumber(obj.getAccountNumber())
                 .orElseThrow(()->new RuntimeException("Invalid Account number"));
+        if(user.isBlocked())
+            return "Account is blocked. Deposit not allowed, Contact Admin";
         if(obj.getAmount()<=0) return "Invalid Amount";
         double newBalance = user.getBalance() + obj.getAmount();
         user.setBalance(newBalance);
@@ -44,6 +46,8 @@ public class TransactionController {
     {
         User user = userRepo.findByAccountNumber(obj.getAccountNumber())
                 .orElseThrow(()-> new RuntimeException("Invalid Account Number"));
+        if(user.isBlocked())
+            return "Account is blocked. Withdrawal not allowed, Contact Admin";
         if(obj.getAmount()<=0) return "Invalid Amount";
         double newBalance = user.getBalance() - obj.getAmount();
         if(newBalance<0) return "Insufficient Balance";
@@ -64,6 +68,8 @@ public class TransactionController {
     {
         User sender = userRepo.findByAccountNumber(obj.getAccountNumber())
                 .orElseThrow(()-> new RuntimeException("Invalid Account Number"));
+        if(sender.isBlocked())
+            return "Account is blocked. Transfer not allowed, Contact Admin";
         User rec = userRepo.findByUsername(obj.getUsername());
         if(rec==null) return "Receiver Not Found";
         if(sender.getId() == rec.getId()) return "Self Transfer Not Allowed";
