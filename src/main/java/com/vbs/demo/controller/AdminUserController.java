@@ -54,6 +54,8 @@ public class AdminUserController {
     {
         User user = userRepo.findByAccountNumber(obj.getAccountNumber())
                 .orElseThrow(()-> new RuntimeException("Invalid Account Number"));
+        if(user.isBlocked())
+            return ("Account is blocked updating not allowed contact Admin");
         History h1 = new History();
         if(obj.getField().equalsIgnoreCase("name"))
         {
